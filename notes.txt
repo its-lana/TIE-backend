@@ -1,0 +1,36 @@
+table_env
+
+{
+    "completed": false,
+    "description": "Wash spoon"
+}
+
+
+Extract table
+
+Route               Controller              Repository      DB
+/extract_table      request.get_image()
+                    extract_table(image)
+                    hasil_extract : excel
+
+                    return hasil_extract
+
+
+Issue : gimana cara masukin file excel ke form validasi?
+
+Quest :
+Skenario 1 : 
+- apakah bisa generate form validasi berdasarkan format excel? asumsikan bisa (jadi form validasi nya kaya ngedit di aplikasi excel aja)
+- gimana cara nyimpen dari file excel ke database?
+
+Skenario 2 :
+- convert excel ke dataframe
+- dari dataframe di kasih rule buat jadi json
+- json masukin ke form validasi
+- dari form validasi bisa langsung simpen ke database
+
+
+/save_validasi      request.get_json()      save():
+                    save(json)              db.insert_one(json)
+
+

@@ -1,0 +1,107 @@
+[
+	{
+		"No": 1,
+		"Nama Materil": "RIGDMRBase Station",
+		"Jumlah": 10,
+		"Satuan": "Unit",
+		"Seri": [
+			"511TWT1238",
+			"511TWT1150511TWT1236511TWT1110",
+			"511TWT1389511TWT1378.511TWT1286",
+			"511TWT1306511TWT3475511TWT1286"
+		],
+		"Kelengkapan": [
+			{ "Nama Materil": "a.PowerSuplay", "Jumlah": 10, "Satuan": "Unit" },
+			{ "Nama Materil": "b.KabelRG8", "Jumlah": 300, "Satuan": "Meter" },
+			{
+				"Nama Materil": "c.KonektorN-maleRG8",
+				"Jumlah": 20,
+				"Satuan": "Unit"
+			},
+			{
+				"Nama Materil": "d.MountingAntena Omni TelexHygain",
+				"Jumlah": 10,
+				"Satuan": "Unit"
+			},
+			{
+				"Nama Materil": "e.AntenaOmni Telexhygain400-470Mhz",
+				"Jumlah": 10,
+				"Satuan": "Unit"
+			},
+			{
+				"Nama Materil": "f.DoubleClampAntenaOmni",
+				"Jumlah": 20,
+				"Satuan": "Unit"
+			},
+			{ "Nama Materil": "g.Microphone", "Jumlah": 10, "Satuan": "Unit" }
+		]
+	},
+	{
+		"No": 2,
+		"Nama Materil": "Radio HFSSBMotorolaVertex1700/SwitchAle",
+		"Jumlah": 4,
+		"Satuan": "Unit",
+		"Seri": ["819Q770096.819Q770095", "819Q770093819Q770094"],
+		"Kelengkapan": [
+			{
+				"Nama Materil": "a.RTVCPowerSupplay40A",
+				"Jumlah": 4,
+				"Satuan": "Unit"
+			},
+			{ "Nama Materil": "b.Hand Microphone", "Jumlah": 4, "Satuan": "Unit" },
+			{ "Nama Materil": "c.Kabel Power", "Jumlah": 4, "Satuan": "Unit" },
+			{
+				"Nama Materil": "d.TiangAntenaTelescopic6meter",
+				"Jumlah": 8,
+				"Satuan": "Unit"
+			},
+			{
+				"Nama Materil": "e.Tali SelingAntena Telescopis",
+				"Jumlah": 8,
+				"Satuan": "Unit"
+			},
+			{
+				"Nama Materil": "f. Tatakan Tiang Telescopis",
+				"Jumlah": 8,
+				"Satuan": "Unit"
+			},
+			{
+				"Nama Materil": "g.Antena HF Dipole Broadband",
+				"Jumlah": 4,
+				"Satuan": "Unit"
+			},
+			{
+				"Nama Materil": "h.AntenaOmni Broadband",
+				"Jumlah": 4,
+				"Satuan": "Unit"
+			},
+			{
+				"Nama Materil": "KableFeederRG830meterdegankonector",
+				"Jumlah": 8,
+				"Satuan": "Unit"
+			},
+			{
+				"Nama Materil": "j.Coaxial CSW-210G",
+				"Jumlah": 4,
+				"Satuan": "Unit"
+			},
+			{
+				"Nama Materil": "k.Coaxial AntenaSwitchCSW210dgnJumper",
+				"Jumlah": 4,
+				"Satuan": "Unit"
+			},
+			{
+				"Nama Materil": "L.LightingAreesterSP-1000",
+				"Jumlah": 4,
+				"Satuan": "Unit"
+			},
+			{ "Nama Materil": "m.KonektorSP1000", "Jumlah": 1, "Satuan": "Rol" }
+		]
+	},
+	{
+		"No": 3,
+		"Nama Materil": "SolarCell Arjuna",
+		"Jumlah": 12,
+		"Satuan": "Unit"
+	}
+]
