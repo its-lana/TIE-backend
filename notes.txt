@@ -34,3 +34,43 @@ Skenario 2 :
                     save(json)              db.insert_one(json)
 
 
+
+
+# api yang dibutuhin
+# 1. extract table brdsarkan jenis dokumen (jenis dokumen, image)
+# 2. save hasil validasi ke db
+# 3. tambah template baru
+
+"""
+routing :
+/table
+1. POST (one document)
+2. GET (all document)
+
+/table/:hash-code
+1. GET (one document)
+2. PUT (one document)
+3. DELETE (one document)
+
+Advance
+/jenis-dokumen
+1. buat jenis dokumen baru (Post)
+2. get all jenis dokumen (get)
+
+/jenis-dokumen/:id-dok
+1. edit jenis dokumen (Put)
+2. delete jenis dokumen (delete)
+"""
+
+"""
+db :
+1. hasil ekstrak dokumen
+2. list jenis dokumen (rule biasa/khusus)
+- nama jenis dokumen
+- header : list header <brrti semua kolom harus dijadiin header, ngg boleh ada yg d skip + jenis tipe datanya (teks/bil bulat/desimal/list)>
+- jumlah gambar input > 1 (true, false)
+- jenis tabel (umum/khusus)
+
+spesial buat yg tabel khusus :
+- ada aturan tambahan buat list header 
+"""
