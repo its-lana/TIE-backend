@@ -21,3 +21,13 @@ sys.path.append("F:\Programming\Python\Flask\TIE\\tes")
 # tes.tesla.lala()
 img_path = "F:\Programming\Python\Flask\TIE\img\z_table2.jpg"
 print(os.path.basename(img_path).split(".")[0])
+
+
+def coba(x):
+    angka = 2 * x
+    if angka == 6:
+        return angka
+
+
+lala = coba(3)
+print(lala)

@@ -4,7 +4,7 @@ import pandas as pd
 import numpy as np
 import json
 import cv2
-
+import hashlib
 
 __dir__ = os.path.dirname(os.path.abspath(__file__))
 sys.path.append(__dir__)
@@ -18,6 +18,14 @@ from PaddleOCR import PPStructure, save_structure_res
 
 def allowed_file(filename):
     return "." in filename and filename.rsplit(".", 1)[1].lower() in ALLOWED_EXTENSIONS
+
+
+def get_hash_code(img_path):
+    # Read the file in binary mode and calculate the MD5 hash
+    with open(img_path, "rb") as file:
+        content = file.read()
+        md5_hash = hashlib.md5(content).hexdigest()
+    return md5_hash
 
 
 # return : excel file path

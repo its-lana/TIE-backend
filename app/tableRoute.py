@@ -1,6 +1,7 @@
 import os
 import sys
 
+
 __dir__ = os.path.dirname(os.path.abspath(__file__))
 sys.path.append(__dir__)
 sys.path.insert(0, os.path.abspath(os.path.join(__dir__, "..")))
@@ -10,7 +11,7 @@ sys.path.insert(0, os.path.abspath(os.path.join(__dir__, "..\PaddleOCR")))
 from flask import request, jsonify, flash, redirect, url_for, send_from_directory
 from app import app
 from werkzeug.utils import secure_filename
-from helpers import allowed_file, extract_table, data_transform
+from helpers import allowed_file, extract_table, data_transform, get_hash_code
 from PaddleOCR.ppstructure import table
 
 from repository import tableRepo
@@ -26,21 +27,42 @@ def upload_file():
             flash("No file part")
             return redirect(request.url)
         file = request.files["file"]
+
         # If the user does not select a file, the browser submits an
         # empty file without a filename.
         if file.filename == "":
             flash("No selected file")
             return redirect(request.url)
+
         if file and allowed_file(file.filename):
             filename = secure_filename(file.filename)
-            file.save(os.path.join(app.config["UPLOAD_FOLDER"], filename))
-            return redirect(url_for("extract_table", name=filename))
+
+            document_type = request.form.get("document_type")
+
+            img_path = os.path.join(app.config["UPLOAD_FOLDER"], filename)
+            file.save(img_path)
+            hash_code = get_hash_code(img_path=img_path)
+            # check unique of image
+            if repo.get_id(hash_code):
+                flash("Image have already been extracted!")
+                return redirect(request.url)
+            # extract
+            os.remove(img_path)
+            # transform
+
+            return {"message": "Hello World"}
+            # return redirect(url_for("extract_table", file_path=img_path))
     return """
     <!doctype html>
     <title>Upload new File</title>
     <h1>Upload new File</h1>
     <form method=post enctype=multipart/form-data>
-      <input type=file name=file>
+        <input type=file name=file>
+        <select name="document_type">
+            <option value="surat_penyerahan_barang">Surat Penyerahan Barang</option>
+            <option value="surat_penerimaan_materil">Surat Penerimaan Materil</option>
+            <option value="surat_kebutuhan_alat">Surat Kebutuhan Alat</option>
+        </select>
       <input type=submit value=Upload>
     </form>
     """
@@ -63,26 +85,34 @@ def download_file(name):
 ########################################################### new
 
 
-@app.route("/table", methods=["GET"])
-def get_all_data_extraction():
-    data_extractions = repo.get_all()
-    response = jsonify(data_extractions)
-    response.status_code = 200
-    return response
+# @app.route("/table", methods=["GET"])
+# def get_all_data_extraction():
+#     data_extractions = repo.get_all()
+#     response = jsonify(data_extractions)
+#     response.status_code = 200
+#     return response
 
 
-@app.route("/table", methods=["POST"])
+@app.route("/table/extract", methods=["POST"])
 def extract_table():
-    data = request.get_data()
-    image = data.img_path
-    dokument_type = data.dokument_type
-    # tambahin pengecekan hashcode img
-    excel_path = extract_table(image)
-    json_data = data_transform(dokument_type, excel_path)
-    new_data = repo.save(json_data)
-    response = jsonify(repo.get_id(new_data))
-    response.status_code = 200
-    return response
+    print()
+    data = request.get_json()
+    document_type = data.get("document_type")
+    # sementara file
+
+    # if unique_img_check(file_path) == False:
+    #     flash("Image have already been extracted!")
+    #     return redirect(request.url)
+    # data = request.get_data()
+    # image = data.img_path
+    # dokument_type = data.dokument_type
+    # # tambahin pengecekan hashcode img
+    # excel_path = extract_table(image)
+    # json_data = data_transform(dokument_type, excel_path)
+    # new_data = repo.save(json_data)
+    # response = jsonify(repo.get_id(new_data))
+    # response.status_code = 200
+    return 0
 
 
 @app.route("/table/<string:img_hash_code>", methods=["GET"])
