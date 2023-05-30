@@ -10,8 +10,12 @@ sys.path.insert(0, os.path.abspath(os.path.join(__dir__, "..\PaddleOCR")))
 from flask import request, jsonify, flash, redirect, url_for, send_from_directory
 from app import app
 from werkzeug.utils import secure_filename
-from helpers import allowed_file, TableArgs
+from helpers import allowed_file, extract_table, data_transform
 from PaddleOCR.ppstructure import table
+
+from repository import tableRepo
+
+repo = tableRepo.TableRepo()
 
 
 @app.route("/table", methods=["GET", "POST"])
@@ -69,10 +73,14 @@ def get_all_data_extraction():
 
 @app.route("/table", methods=["POST"])
 def extract_table():
-    image = request.get_image()
-    excel_file = Paddle.extract(image)
-    json_data = transform_data(excel_file)
-    response = jsonify(json_data)
+    data = request.get_data()
+    image = data.img_path
+    dokument_type = data.dokument_type
+    # tambahin pengecekan hashcode img
+    excel_path = extract_table(image)
+    json_data = data_transform(dokument_type, excel_path)
+    new_data = repo.save(json_data)
+    response = jsonify(repo.get_id(new_data))
     response.status_code = 200
     return response
 

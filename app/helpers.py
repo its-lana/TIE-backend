@@ -7,17 +7,40 @@ import cv2
 
 
 __dir__ = os.path.dirname(os.path.abspath(__file__))
+sys.path.append(__dir__)
 sys.path.insert(0, os.path.abspath(os.path.join(__dir__, "..")))
+sys.path.insert(0, os.path.abspath(os.path.join(__dir__, "..\PaddleOCR")))
 
-from config import ALLOWED_EXTENSIONS
+
+from config import ALLOWED_EXTENSIONS, EXTRACT_RESULT_PATH
+from PaddleOCR import PPStructure, save_structure_res
 
 
 def allowed_file(filename):
     return "." in filename and filename.rsplit(".", 1)[1].lower() in ALLOWED_EXTENSIONS
 
 
+# return : excel file path
+def extract_table(img_path):
+    table_engine = PPStructure(layout=False, show_log=True)
+    save_folder = EXTRACT_RESULT_PATH
+    img = cv2.imread(img_path)
+    result = table_engine(img)
+    img_filename = os.path.basename(img_path).split(".")[0]
+    excel_path = save_structure_res(result, save_folder, img_filename)
+
+    return excel_path
+
+
 def data_transform(dokument_type, excel_path):
-    return 0
+    json_data = []
+    if dokument_type == "Surat Penyerahan Barang":
+        json_data = surat_penyerahan_barang(excel_path=excel_path)
+    elif dokument_type == "Surat Penerimaan Materil":
+        json_data = surat_penerimaan_materil(excel_path=excel_path)
+    elif dokument_type == "Surat Kebutuhan Alat":
+        json_data = surat_kebutuhan_alat(excel_path=excel_path)
+    return json_data
 
 
 def surat_penyerahan_barang(excel_path):
@@ -205,9 +228,9 @@ def convert_to_int(df, column_name):
         df[column_name] = df[column_name].astype(int)
 
 
-json_surat1 = surat_penyerahan_barang(
-    "F:/Programming/Python/Flask/TIE/output/table/[0, 0, 1133, 907]_0.xlsx"
-)
+# json_surat1 = surat_penyerahan_barang(
+#     "F:/Programming/Python/Flask/TIE/output/table/[0, 0, 1133, 907]_0.xlsx"
+# )
 
-with open("F:/Programming/Python/Flask/TIE/output/table/data.json", "w") as file:
-    json.dump(json_surat1, file)
+# with open("F:/Programming/Python/Flask/TIE/output/table/data.json", "w") as file:
+#     json.dump(json_surat1, file)

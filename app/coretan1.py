@@ -1,4 +1,4 @@
-# import paddle 
+# import paddle
 # paddle.utils.run_check()
 
 # import tensorflow as tf
@@ -10,12 +10,14 @@
 # else:
 #   print("GPU is not available")
 # import os
-import sys
+import sys, os
 
 # __dir__ = os.path.dirname(os.path.abspath(__file__))
 sys.path.append("F:\Programming\Python\Flask\TIE")
 sys.path.append("F:\Programming\Python\Flask\TIE\\tes")
 
-import tes
+# import tes
 
-tes.tesla.lala()
+# tes.tesla.lala()
+img_path = "F:\Programming\Python\Flask\TIE\img\z_table2.jpg"
+print(os.path.basename(img_path).split(".")[0])
