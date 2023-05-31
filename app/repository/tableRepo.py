@@ -6,13 +6,18 @@ import json
 class TableRepo:
     def __init__(self):
         self.client = MongoClient("localhost", 27017)
-        self.db = self.client.table_extraction_database
-        self.tables = self.db.table_collection
+        self.db = self.client.table_information_extraction_db
+        self.tables = self.db.table_extraction
 
-    def get_id(self, table_id):
+    def get_document_by_id(self, table_id):
         table_extraction_data = self.tables.find_one({"_id": ObjectId(table_id)})
-        table_extraction_data = json.loads(json_util.dumps(table_extraction_data))
-        table_extraction_data["_id"] = table_extraction_data["_id"]["$oid"]
+        if table_extraction_data is not None:
+            table_extraction_data = json.loads(json_util.dumps(table_extraction_data))
+            table_extraction_data["_id"] = table_extraction_data["_id"]["$oid"]
+        return table_extraction_data
+
+    def get_document_by_hash_code(self, hash_code):
+        table_extraction_data = self.tables.find_one({"hash_code": hash_code})
         return table_extraction_data
 
     def get_all(self):

@@ -12,8 +12,11 @@ sys.path.insert(0, os.path.abspath(os.path.join(__dir__, "..")))
 sys.path.insert(0, os.path.abspath(os.path.join(__dir__, "..\PaddleOCR")))
 
 
-from config import ALLOWED_EXTENSIONS, EXTRACT_RESULT_PATH
+from config import ALLOWED_EXTENSIONS, EXTRACT_RESULT_PATH, JSON_DIR
 from PaddleOCR import PPStructure, save_structure_res
+from repository import tableRepo
+
+repo = tableRepo.TableRepo()
 
 
 def allowed_file(filename):
@@ -28,6 +31,11 @@ def get_hash_code(img_path):
     return md5_hash
 
 
+def is_unique(hash_code):
+    result = repo.get_document_by_hash_code(hash_code)
+    return result is None
+
+
 # return : excel file path
 def extract_table(img_path):
     table_engine = PPStructure(layout=False, show_log=True)
@@ -40,18 +48,18 @@ def extract_table(img_path):
     return excel_path
 
 
-def data_transform(dokument_type, excel_path):
+def data_transform(dokument_type, excel_path, hash_code):
     json_data = []
-    if dokument_type == "Surat Penyerahan Barang":
-        json_data = surat_penyerahan_barang(excel_path=excel_path)
-    elif dokument_type == "Surat Penerimaan Materil":
-        json_data = surat_penerimaan_materil(excel_path=excel_path)
-    elif dokument_type == "Surat Kebutuhan Alat":
-        json_data = surat_kebutuhan_alat(excel_path=excel_path)
+    if dokument_type == "surat_penyerahan_barang":
+        json_data = surat_penyerahan_barang(excel_path=excel_path, hash_code=hash_code)
+    elif dokument_type == "surat_penerimaan_materil":
+        json_data = surat_penerimaan_materil(excel_path=excel_path, hash_code=hash_code)
+    elif dokument_type == "surat_kebutuhan_alat":
+        json_data = surat_kebutuhan_alat(excel_path=excel_path, hash_code=hash_code)
     return json_data
 
 
-def surat_penyerahan_barang(excel_path):
+def surat_penyerahan_barang(excel_path, hash_code):
     header = ["No", "Nama Materil", "Jumlah", "Satuan", "Keterangan"]  # set header
     df = pd.read_excel(
         excel_path, header=None, skiprows=4, names=header, usecols=[0, 1, 2, 4, 5]
@@ -117,10 +125,14 @@ def surat_penyerahan_barang(excel_path):
         # add json_item to json_all_item
         json_all_items.append(json_item[0])
 
+    json_filename = hash_code + ".json"
+    json_path = os.path.join(JSON_DIR, json_filename)
+    with open(json_path, "w") as file:
+        json.dump(json_all_items, file)
     return json_all_items
 
 
-def surat_penerimaan_materil(excel_path):
+def surat_penerimaan_materil(excel_path, hash_code):
     header = [
         "No Urut",
         "Nama dan Kode Materiil",
@@ -142,12 +154,14 @@ def surat_penerimaan_materil(excel_path):
     for column_name in column_to_convert:
         convert_to_int(df, column_name)
 
-    json_all_items = df_to_json(df, "../output/json/dokumen2.json")
+    json_filename = hash_code + ".json"
+    json_path = os.path.join(JSON_DIR, json_filename)
+    json_all_items = df_to_json(df, json_path)
 
     return json_all_items
 
 
-def surat_kebutuhan_alat(excel_path):
+def surat_kebutuhan_alat(excel_path, hash_code):
     header = [
         "No",
         "Jenis Materiil",
@@ -179,7 +193,9 @@ def surat_kebutuhan_alat(excel_path):
     for column_name in column_to_convert:
         convert_to_int(df, column_name)
 
-    json_all_items = df_to_json(df, "../output/json/dokumen3.json")
+    json_filename = hash_code + ".json"
+    json_path = os.path.join(JSON_DIR, json_filename)
+    json_all_items = df_to_json(df, json_path)
 
     return json_all_items
 
@@ -205,10 +221,10 @@ def stitching_image(path_img1, path_img2):
     cv2.imwrite("/content/hasil.jpg", result)
 
 
-def df_to_json(df, path_to_save):
+def df_to_json(df, json_path):
     json_str = df.to_json(orient="records")  # df to json string
     json_list = json.loads(json_str)  # str to json list
-    with open(path_to_save, "w") as file:
+    with open(json_path, "w") as file:
         json.dump(json_list, file)
     return json_list
 

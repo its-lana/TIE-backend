@@ -1,5 +1,6 @@
 import os
 import sys
+import shutil
 
 
 __dir__ = os.path.dirname(os.path.abspath(__file__))
@@ -11,7 +12,13 @@ sys.path.insert(0, os.path.abspath(os.path.join(__dir__, "..\PaddleOCR")))
 from flask import request, jsonify, flash, redirect, url_for, send_from_directory
 from app import app
 from werkzeug.utils import secure_filename
-from helpers import allowed_file, extract_table, data_transform, get_hash_code
+from helpers import (
+    allowed_file,
+    extract_table,
+    data_transform,
+    get_hash_code,
+    is_unique,
+)
 from PaddleOCR.ppstructure import table
 
 from repository import tableRepo
@@ -19,20 +26,19 @@ from repository import tableRepo
 repo = tableRepo.TableRepo()
 
 
+# pr :  cek setiap metode yg di panggil transform_data;
 @app.route("/table", methods=["GET", "POST"])
 def upload_file():
     if request.method == "POST":
         # check if the post request has the file part
         if "file" not in request.files:
-            flash("No file part")
-            return redirect(request.url)
+            return jsonify({"error": "No file part!"}), 400
         file = request.files["file"]
 
         # If the user does not select a file, the browser submits an
         # empty file without a filename.
         if file.filename == "":
-            flash("No selected file")
-            return redirect(request.url)
+            return jsonify({"error": "No selected file!"}), 400
 
         if file and allowed_file(file.filename):
             filename = secure_filename(file.filename)
@@ -42,15 +48,25 @@ def upload_file():
             img_path = os.path.join(app.config["UPLOAD_FOLDER"], filename)
             file.save(img_path)
             hash_code = get_hash_code(img_path=img_path)
-            # check unique of image
-            if repo.get_id(hash_code):
-                flash("Image have already been extracted!")
-                return redirect(request.url)
-            # extract
-            os.remove(img_path)
-            # transform
+            # Has the image been extracted?
+            if not is_unique(hash_code):
+                return jsonify({"error": "Image has been extracted!"}), 400
 
-            return {"message": "Hello World"}
+            excel_path = extract_table(img_path)
+            extraction_data = data_transform(document_type, excel_path, hash_code)
+            os.remove(img_path)
+            shutil.rmtree(os.path.dirname(os.path.abspath(excel_path)))
+
+            json_data = {}
+            json_data["hash_code"] = hash_code
+            json_data["jenis_dokumen"] = document_type.replace("_", " ").title()
+            json_data["data_ekstraksi"] = extraction_data
+
+            data_id = repo.save(json_data)
+            response = jsonify(repo.get_document_by_id(data_id))
+            response.status_code = 200
+
+            return response
             # return redirect(url_for("extract_table", file_path=img_path))
     return """
     <!doctype html>
@@ -93,31 +109,9 @@ def download_file(name):
 #     return response
 
 
-@app.route("/table/extract", methods=["POST"])
-def extract_table():
-    print()
-    data = request.get_json()
-    document_type = data.get("document_type")
-    # sementara file
-
-    # if unique_img_check(file_path) == False:
-    #     flash("Image have already been extracted!")
-    #     return redirect(request.url)
-    # data = request.get_data()
-    # image = data.img_path
-    # dokument_type = data.dokument_type
-    # # tambahin pengecekan hashcode img
-    # excel_path = extract_table(image)
-    # json_data = data_transform(dokument_type, excel_path)
-    # new_data = repo.save(json_data)
-    # response = jsonify(repo.get_id(new_data))
-    # response.status_code = 200
-    return 0
-
-
 @app.route("/table/<string:img_hash_code>", methods=["GET"])
 def get_data_extraction(img_hash_code):
-    data_extraction = repo.get_id(img_hash_code)
+    data_extraction = repo.get_document_by_id(img_hash_code)
     response = jsonify(data_extraction)
     response.status_code = 200
     return response
@@ -129,7 +123,7 @@ def update_data_extraction(img_hash_code):
     updated = repo.update(body)
 
     if updated >= 1:
-        response = jsonify(repo.get_id(img_hash_code))
+        response = jsonify(repo.get_document_by_id(img_hash_code))
         response.status_code = 200
     else:
         response = jsonify({"status_code": 404})
