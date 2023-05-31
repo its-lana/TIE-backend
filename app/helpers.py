@@ -246,6 +246,7 @@ def convert_to_int(df, column_name):
                     df.at[index, column_name] = df.at[index, column_name].replace(
                         ",", ""
                     )
+                    print(df.at[index, column_name])
                     if df.at[index, column_name].isnumeric() == False:
                         df.at[index, column_name] = 0
         # change data type of column to int

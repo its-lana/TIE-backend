@@ -44,3 +44,18 @@ class TableRepo:
     def delete(self, table_id):
         result = self.tables.delete_one({"_id": ObjectId(table_id)})
         return result.deleted_count
+
+
+# repo = TableRepo()
+# with open("../../output/json/2_table2.json", "r") as file:
+#     # Memuat konten file JSON
+#     data = json.load(file)
+
+# table2 = {
+#     "hash_code": "80dcaf54f5b46e0e1a7d378e2a59cbb4",
+#     "jenis_dokumen": "surat_kebutuhan_alat",
+#     "data_ekstraksi": data,
+# }
+
+# id = repo.save(table2)
+# print(id)

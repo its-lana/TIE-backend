@@ -101,38 +101,39 @@ def download_file(name):
 ########################################################### new
 
 
-# @app.route("/table", methods=["GET"])
-# def get_all_data_extraction():
-#     data_extractions = repo.get_all()
-#     response = jsonify(data_extractions)
-#     response.status_code = 200
-#     return response
+@app.route("/table/all", methods=["GET"])
+def get_all_data_extraction():
+    data_extractions = repo.get_all()
+    response = jsonify(data_extractions)
+    response.status_code = 200
+    return response
 
 
-@app.route("/table/<string:img_hash_code>", methods=["GET"])
-def get_data_extraction(img_hash_code):
-    data_extraction = repo.get_document_by_id(img_hash_code)
+@app.route("/table/<string:table_id>", methods=["GET"])
+def get_data_extraction(table_id):
+    data_extraction = repo.get_document_by_id(table_id)
     response = jsonify(data_extraction)
     response.status_code = 200
     return response
 
 
-@app.route("/table/<string:img_hash_code>", methods=["PUT"])
-def update_data_extraction(img_hash_code):
+# note : data yg dikiri fe pas put, harus ada id nya,
+@app.route("/table/<string:table_id>", methods=["PUT"])
+def update_data_extraction(table_id):
     body = request.get_json()
     updated = repo.update(body)
 
     if updated >= 1:
-        response = jsonify(repo.get_document_by_id(img_hash_code))
+        response = jsonify(repo.get_document_by_id(table_id))
         response.status_code = 200
     else:
         response = jsonify({"status_code": 404})
     return response
 
 
-@app.route("/table/<string:img_hash_code>", methods=["DELETE"])
-def delete_data_extraction(img_hash_code):
-    deleted = repo.delete(img_hash_code)
+@app.route("/table/<string:table_id>", methods=["DELETE"])
+def delete_data_extraction(table_id):
+    deleted = repo.delete(table_id)
 
     if deleted >= 1:
         response = jsonify({"status_code": 200})
