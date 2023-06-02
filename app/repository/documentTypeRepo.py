@@ -16,6 +16,13 @@ class DocumentTypeRepo:
             doc_type_data["_id"] = doc_type_data["_id"]["$oid"]
         return doc_type_data
 
+    def get_doc_type_by_name(self, doc_type_name):
+        doc_type_data = self.doc_types.find_one({"nama_dokumen": doc_type_name})
+        if doc_type_data is not None:
+            doc_type_data = json.loads(json_util.dumps(doc_type_data))
+            doc_type_data["_id"] = doc_type_data["_id"]["$oid"]
+        return doc_type_data
+
     def get_all_doc_types(self):
         cursor = self.doc_types.find({})
         doc_types_data = list(cursor)

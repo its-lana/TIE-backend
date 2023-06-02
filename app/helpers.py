@@ -15,9 +15,10 @@ sys.path.insert(0, os.path.abspath(os.path.join(__dir__, "..\PaddleOCR")))
 
 from config import ALLOWED_EXTENSIONS, EXTRACT_RESULT_PATH, JSON_DIR, UPLOAD_IMAGE_PATH
 from PaddleOCR import PPStructure, save_structure_res
-from repository import tableRepo
+from repository import tableRepo, documentTypeRepo
 
-repo = tableRepo.TableRepo()
+table_repo = tableRepo.TableRepo()
+doc_type_repo = documentTypeRepo.DocumentTypeRepo()
 
 
 def allowed_file(filename):
@@ -33,7 +34,7 @@ def get_hash_code(img_path):
 
 
 def is_unique(hash_code):
-    result = repo.get_table_extraction_by_hash_code(hash_code)
+    result = table_repo.get_table_extraction_by_hash_code(hash_code)
     return result is None
 
 
@@ -49,7 +50,124 @@ def extract_table(img_path):
     return excel_path
 
 
-def data_transform(dokument_type, excel_path, hash_code):
+def data_transform(document_type, excel_path, hash_code):
+    document_type = document_type.replace("_", " ").title()
+    dokumen = doc_type_repo.get_doc_type_by_name(document_type)
+    if dokumen["jenis_tabel"] == "Umum":
+        json_data = common_table(dokumen["daftar_kolom"], excel_path, hash_code)
+    else:
+        json_data = ex_surat_penyerahan_barang(excel_path, hash_code)
+    return json_data
+
+
+# data transform for common table
+def common_table(column_list, excel_path, hash_code):
+    # get list column list
+    column_name_list = [column["nama_kolom"] for column in column_list]
+    # generate use cols: generate list 0..len(column name list)
+    use_cols = list(range(len(column_name_list)))
+    # read excel
+    df = pd.read_excel(
+        excel_path, header=None, names=column_name_list, usecols=use_cols
+    )
+    # skiprows
+    df[column_name_list[1]] = df[column_name_list[1]].fillna("")
+    skiprows = df[df[column_name_list[1]].str.contains("2")].index.tolist()[0] + 1
+    df = df.iloc[skiprows:]
+    df = df.reset_index(drop=True)
+    # replace "No" column value with generate number
+    df[column_name_list[0]] = range(1, len(df) + 1)
+
+    # get list column with tipe_data int
+    int_column_list = [
+        column["nama_kolom"] for column in column_list if column["tipe_data"] == "int"
+    ]
+    int_column_list = int_column_list[1:]
+    # change NaN in int_column_list with 0 and convert to int
+    for column_name in int_column_list:
+        df[column_name] = df[column_name].fillna(0)
+        convert_to_int(df, column_name)
+
+    # transform to json
+    json_filename = hash_code + ".json"
+    json_path = os.path.join(JSON_DIR, json_filename)
+    json_all_items = df_to_json(df, json_path)
+
+    return json_all_items
+
+
+# include check allowed_file and save image, return value : path image list
+def files_handling(files):
+    path_img_list = []
+    for file in files:
+        if allowed_file(file.filename):
+            filename = secure_filename(file.filename)
+            img_path = os.path.join(UPLOAD_IMAGE_PATH, filename)
+            print(img_path)
+            file.save(img_path)
+            path_img_list.append(img_path)
+    return path_img_list
+
+
+# images stitching from list image
+def images_stitching(img_path_list):
+    img_list = []
+    for path in img_path_list:
+        img = cv2.imread(path)
+        img_list.append(img)
+        os.remove(path)
+
+    # resize the width of the image to follow the first image
+    for i in range(len(img_list) - 1):
+        img_list[i + 1] = cv2.resize(
+            img_list[i + 1], (img_list[0].shape[1], img_list[i + 1].shape[0])
+        )
+
+    # Create a blank image with sufficient size
+    width = img_list[0].shape[1]
+    height = 0
+    for i in range(len(img_list)):
+        height += img_list[i].shape[0]
+    result = np.zeros((height, width, 3), dtype=np.uint8)
+
+    # placement of images based on sequence
+    start = 0
+    for img in img_list:
+        end = start + img.shape[0]
+        result[start:end, :] = img
+        start = end
+    filename = "combined_image.jpg"
+    file_path = os.path.join(UPLOAD_IMAGE_PATH, filename)
+
+    # save image to file
+    cv2.imwrite(file_path, result)
+    return file_path
+
+
+# transform dataframe to json
+def df_to_json(df, json_path):
+    json_str = df.to_json(orient="records")  # df to json string
+    json_list = json.loads(json_str)  # str to json list
+    with open(json_path, "w") as file:
+        json.dump(json_list, file)
+    return json_list
+
+
+# convert each value in dataframe column to integer
+def convert_to_int(df, column_name):
+    print("Converting " + column_name + " to Int")
+    for index, value in enumerate(df[column_name]):
+        if type(df.at[index, column_name]) == str:
+            if df.at[index, column_name].isnumeric() == False:
+                df.at[index, column_name] = df.at[index, column_name].replace(".", "")
+                df.at[index, column_name] = df.at[index, column_name].replace(",", "")
+                if df.at[index, column_name].isnumeric() == False:
+                    df.at[index, column_name] = 0
+        df.at[index, column_name] = int(df.at[index, column_name])
+
+
+# ga dipake
+def ex_data_transform(dokument_type, excel_path, hash_code):
     json_data = []
     if dokument_type == "surat_penyerahan_barang":
         json_data = surat_penyerahan_barang(excel_path=excel_path, hash_code=hash_code)
@@ -60,7 +178,7 @@ def data_transform(dokument_type, excel_path, hash_code):
     return json_data
 
 
-def surat_penyerahan_barang(excel_path, hash_code):
+def ex_surat_penyerahan_barang(excel_path, hash_code):
     header = ["No", "Nama Materil", "Jumlah", "Satuan", "Keterangan"]  # set header
     df = pd.read_excel(
         excel_path, header=None, skiprows=4, names=header, usecols=[0, 1, 2, 4, 5]
@@ -133,7 +251,7 @@ def surat_penyerahan_barang(excel_path, hash_code):
     return json_all_items
 
 
-def surat_penerimaan_materil(excel_path, hash_code):
+def ex_surat_penerimaan_materil(excel_path, hash_code):
     header = [
         "No Urut",
         "Nama dan Kode Materiil",
@@ -162,7 +280,7 @@ def surat_penerimaan_materil(excel_path, hash_code):
     return json_all_items
 
 
-def surat_kebutuhan_alat(excel_path, hash_code):
+def ex_surat_kebutuhan_alat(excel_path, hash_code):
     header = [
         "No",
         "Jenis Materiil",
@@ -199,83 +317,3 @@ def surat_kebutuhan_alat(excel_path, hash_code):
     json_all_items = df_to_json(df, json_path)
 
     return json_all_items
-
-
-# init state : list file
-# final state : di save dan return list path img nya, tp sblm itu d cek ini itu dulu
-# hashcode ngg masuk sini
-def files_handling(files):
-    path_img_list = []
-    for file in files:
-        if allowed_file(file.filename):
-            filename = secure_filename(file.filename)
-            img_path = os.path.join(UPLOAD_IMAGE_PATH, filename)
-            print(img_path)
-            file.save(img_path)
-            path_img_list.append(img_path)
-    return path_img_list
-
-
-# init state : list path img
-# final state : digabung jadi satu file
-def images_stitching(img_path_list):
-    img_list = []
-    for path in img_path_list:
-        img = cv2.imread(path)
-        img_list.append(img)
-        os.remove(path)
-
-    # resize the width of the image to follow the first image
-    for i in range(len(img_list) - 1):
-        img_list[i + 1] = cv2.resize(
-            img_list[i + 1], (img_list[0].shape[1], img_list[i + 1].shape[0])
-        )
-
-    # Create a blank image with sufficient size
-    width = img_list[0].shape[1]
-    height = 0
-    for i in range(len(img_list)):
-        height += img_list[i].shape[0]
-    result = np.zeros((height, width, 3), dtype=np.uint8)
-
-    # placement of images based on sequence
-    start = 0
-    for img in img_list:
-        end = start + img.shape[0]
-        result[start:end, :] = img
-        start = end
-    filename = "combined_image.jpg"
-    file_path = os.path.join(UPLOAD_IMAGE_PATH, filename)
-
-    # save image to file
-    cv2.imwrite(file_path, result)
-    return file_path
-
-
-def df_to_json(df, json_path):
-    json_str = df.to_json(orient="records")  # df to json string
-    json_list = json.loads(json_str)  # str to json list
-    with open(json_path, "w") as file:
-        json.dump(json_list, file)
-    return json_list
-
-
-# convert dataframe column to integer
-def convert_to_int(df, column_name):
-    print("Converting " + column_name + " to Int")
-    for index, value in enumerate(df[column_name]):
-        if type(df.at[index, column_name]) == str:
-            if df.at[index, column_name].isnumeric() == False:
-                df.at[index, column_name] = df.at[index, column_name].replace(".", "")
-                df.at[index, column_name] = df.at[index, column_name].replace(",", "")
-                if df.at[index, column_name].isnumeric() == False:
-                    df.at[index, column_name] = 0
-        df.at[index, column_name] = int(df.at[index, column_name])
-
-
-# json_surat1 = surat_penyerahan_barang(
-#     "F:/Programming/Python/Flask/TIE/output/table/[0, 0, 1133, 907]_0.xlsx"
-# )
-
-# with open("F:/Programming/Python/Flask/TIE/output/table/data.json", "w") as file:
-#     json.dump(json_surat1, file)

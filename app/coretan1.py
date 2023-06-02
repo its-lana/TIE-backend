@@ -38,21 +38,31 @@ class TemplateRepo:
 
 template2 = {
     "nama_dokumen": "Surat Penerimaan Materil",
-    "header_list": [
-        {"header_name": "No Urut", "header_data_type": "int"},
-        {"header_name": "Nama dan Kode Materiil", "header_data_type": "string"},
-        {"header_name": "Satuan", "header_data_type": "string"},
-        {"header_name": "Banyaknya (Angka)", "header_data_type": "int"},
+    "jenis_tabel": "Umum",
+    "daftar_kolom": [
+        {"nama_kolom": "No Urut", "tipe_data": "int"},
+        {"nama_kolom": "Nama dan Kode Materiil", "tipe_data": "string"},
+        {"nama_kolom": "Satuan", "tipe_data": "string"},
+        {"nama_kolom": "Banyaknya (Angka)", "tipe_data": "int"},
+        {"nama_kolom": "Banyaknya (Huruf)", "tipe_data": "string"},
+        {"nama_kolom": "Harga (Jumlah (Rp))", "tipe_data": "int"},
+        {"nama_kolom": "Ket", "tipe_data": "string"},
     ],
 }
 
 template3 = {
     "nama_dokumen": "Surat Kebutuhan Alat",
-    "header_list": [
-        {"header_name": "No", "header_data_type": "int"},
-        {"header_name": "Jenis Materiil", "header_data_type": "string"},
-        {"header_name": "Satuan", "header_data_type": "string"},
-        {"header_name": "Indeks OPS", "header_data_type": "int"},
+    "jenis_tabel": "Umum",
+    "daftar_kolom": [
+        {"nama_kolom": "NO", "tipe_data": "int"},
+        {"nama_kolom": "JENIS MATERIIL", "tipe_data": "string"},
+        {"nama_kolom": "SAT", "tipe_data": "string"},
+        {"nama_kolom": "INDEKS OPS", "tipe_data": "int"},
+        {"nama_kolom": "KEBUT OPS", "tipe_data": "int"},
+        {"nama_kolom": "NYATA", "tipe_data": "int"},
+        {"nama_kolom": "TERDUKUNG", "tipe_data": "int"},
+        {"nama_kolom": "KURANG", "tipe_data": "int"},
+        {"nama_kolom": "KET", "tipe_data": "string"},
     ],
 }
 

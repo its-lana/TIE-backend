@@ -1,1 +1,156 @@
-[{"No": 1, "Jenis Materiil": "Radio AM/SSB", "Satuan": "Set", "Indeks OPS": 4.0, "Kebut OPS": 6, "Nyata": 0.0, "Terdukung": 6.0, "Kurang": 0, "Keterangan": null}, {"No": 2, "Jenis Materiil": "Radio Rig", "Satuan": "Set", "Indeks OPS": 0.0, "Kebut OPS": 5, "Nyata": 0.0, "Terdukung": 0.0, "Kurang": 5, "Keterangan": null}, {"No": 3, "Jenis Materiil": "Radio PRC-1077", "Satuan": "Set", "Indeks OPS": 14.0, "Kebut OPS": 0, "Nyata": 0.0, "Terdukung": 0.0, "Kurang": 0, "Keterangan": null}, {"No": 4, "Jenis Materiil": "Radio HT UHF", "Satuan": "Set", "Indeks OPS": 60.0, "Kebut OPS": 40, "Nyata": 20.0, "Terdukung": 20.0, "Kurang": 0, "Keterangan": null}, {"No": 5, "Jenis Materiil": "Repeater UHF", "Satuan": "Set", "Indeks OPS": 1.0, "Kebut OPS": 2, "Nyata": 0.0, "Terdukung": 2.0, "Kurang": 0, "Keterangan": null}, {"No": 6, "Jenis Materiil": "HP Satelit", "Satuan": "Buah", "Indeks OPS": 0.0, "Kebut OPS": 6, "Nyata": 0.0, "Terdukung": 0.0, "Kurang": 6, "Keterangan": null}, {"No": 7, "Jenis Materiil": "Solar Cell", "Satuan": "Buah", "Indeks OPS": 4.0, "Kebut OPS": 20, "Nyata": 0.0, "Terdukung": 4.0, "Kurang": 16, "Keterangan": null}, {"No": 8, "Jenis Materiil": "Repeater Penguat sinyal GSM", "Satuan": "Unit", "Indeks OPS": 0.0, "Kebut OPS": 6, "Nyata": 0.0, "Terdukung": 0.0, "Kurang": 6, "Keterangan": null}, {"No": 9, "Jenis Materiil": null, "Satuan": "Unit", "Indeks OPS": 0.0, "Kebut OPS": 6, "Nyata": 0.0, "Terdukung": 0.0, "Kurang": 0, "Keterangan": "6"}, {"No": 10, "Jenis Materiil": "Genset 3 KVA", "Satuan": null, "Indeks OPS": 0.0, "Kebut OPS": 7, "Nyata": 0.0, "Terdukung": 0.0, "Kurang": 0, "Keterangan": null}, {"No": 11, "Jenis Materiil": "Inverter 3KVA Accu12Volt 60 AH", "Satuan": "Buah Buah", "Indeks OPS": 4.0, "Kebut OPS": 15, "Nyata": 0.0, "Terdukung": 4.0, "Kurang": 0, "Keterangan": "7 11"}, {"No": 12, "Jenis Materiil": null, "Satuan": null, "Indeks OPS": 0.0, "Kebut OPS": 0, "Nyata": 0.0, "Terdukung": 0.0, "Kurang": 0, "Keterangan": "8"}, {"No": 13, "Jenis Materiil": "2 Batt Nicad HT Mototrbo", "Satuan": "3 Buah", "Indeks OPS": 4.0, "Kebut OPS": 0, "Nyata": 6.0, "Terdukung": 7.0, "Kurang": 0, "Keterangan": null}, {"No": 14, "Jenis Materiil": "Batt Nicad HTIcom", "Satuan": "Buah", "Indeks OPS": 0.0, "Kebut OPS": 20, "Nyata": 0.0, "Terdukung": 0.0, "Kurang": 0, "Keterangan": null}]
+[
+	{
+		"NO": 1,
+		"JENIS MATERIIL": "Radio AM/SSB",
+		"SAT": "Set",
+		"INDEKS OPS": 4,
+		"KEBUT OPS": 6,
+		"NYATA": 0,
+		"TERDUKUNG": 6,
+		"KURANG": 0,
+		"KET": null
+	},
+	{
+		"NO": 2,
+		"JENIS MATERIIL": "Radio Rig",
+		"SAT": "Set",
+		"INDEKS OPS": 0,
+		"KEBUT OPS": 5,
+		"NYATA": 0,
+		"TERDUKUNG": 0,
+		"KURANG": 5,
+		"KET": null
+	},
+	{
+		"NO": 3,
+		"JENIS MATERIIL": "Radio PRC-1077",
+		"SAT": "Set",
+		"INDEKS OPS": 14,
+		"KEBUT OPS": 0,
+		"NYATA": 0,
+		"TERDUKUNG": 0,
+		"KURANG": 0,
+		"KET": null
+	},
+	{
+		"NO": 4,
+		"JENIS MATERIIL": "Radio HT UHF",
+		"SAT": "Set",
+		"INDEKS OPS": 60,
+		"KEBUT OPS": 40,
+		"NYATA": 20,
+		"TERDUKUNG": 20,
+		"KURANG": 0,
+		"KET": null
+	},
+	{
+		"NO": 5,
+		"JENIS MATERIIL": "Repeater UHF",
+		"SAT": "Set",
+		"INDEKS OPS": 1,
+		"KEBUT OPS": 2,
+		"NYATA": 0,
+		"TERDUKUNG": 2,
+		"KURANG": 0,
+		"KET": null
+	},
+	{
+		"NO": 6,
+		"JENIS MATERIIL": "HP Satelit",
+		"SAT": "Buah",
+		"INDEKS OPS": 0,
+		"KEBUT OPS": 6,
+		"NYATA": 0,
+		"TERDUKUNG": 0,
+		"KURANG": 6,
+		"KET": null
+	},
+	{
+		"NO": 7,
+		"JENIS MATERIIL": "Solar Cell",
+		"SAT": "Buah",
+		"INDEKS OPS": 4,
+		"KEBUT OPS": 20,
+		"NYATA": 0,
+		"TERDUKUNG": 4,
+		"KURANG": 16,
+		"KET": null
+	},
+	{
+		"NO": 8,
+		"JENIS MATERIIL": "Repeater Penguat sinyal GSM",
+		"SAT": "Unit",
+		"INDEKS OPS": 0,
+		"KEBUT OPS": 6,
+		"NYATA": 0,
+		"TERDUKUNG": 0,
+		"KURANG": 6,
+		"KET": null
+	},
+	{
+		"NO": 9,
+		"JENIS MATERIIL": "",
+		"SAT": "Unit",
+		"INDEKS OPS": 0,
+		"KEBUT OPS": 6,
+		"NYATA": 0,
+		"TERDUKUNG": 0,
+		"KURANG": 0,
+		"KET": "6"
+	},
+	{
+		"NO": 10,
+		"JENIS MATERIIL": "Genset 3 KVA",
+		"SAT": null,
+		"INDEKS OPS": 0,
+		"KEBUT OPS": 7,
+		"NYATA": 0,
+		"TERDUKUNG": 0,
+		"KURANG": 0,
+		"KET": null
+	},
+	{
+		"NO": 11,
+		"JENIS MATERIIL": "Inverter 3KVA Accu12Volt 60 AH",
+		"SAT": "Buah Buah",
+		"INDEKS OPS": 4,
+		"KEBUT OPS": 15,
+		"NYATA": 0,
+		"TERDUKUNG": 4,
+		"KURANG": 0,
+		"KET": "7 11"
+	},
+	{
+		"NO": 12,
+		"JENIS MATERIIL": "",
+		"SAT": null,
+		"INDEKS OPS": 0,
+		"KEBUT OPS": 0,
+		"NYATA": 0,
+		"TERDUKUNG": 0,
+		"KURANG": 0,
+		"KET": "8"
+	},
+	{
+		"NO": 13,
+		"JENIS MATERIIL": "2 Batt Nicad HT Mototrbo",
+		"SAT": "3 Buah",
+		"INDEKS OPS": 4,
+		"KEBUT OPS": 0,
+		"NYATA": 6,
+		"TERDUKUNG": 7,
+		"KURANG": 0,
+		"KET": null
+	},
+	{
+		"NO": 14,
+		"JENIS MATERIIL": "Batt Nicad HTIcom",
+		"SAT": "Buah",
+		"INDEKS OPS": 0,
+		"KEBUT OPS": 20,
+		"NYATA": 0,
+		"TERDUKUNG": 0,
+		"KURANG": 0,
+		"KET": null
+	}
+]
