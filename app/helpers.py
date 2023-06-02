@@ -170,11 +170,15 @@ def convert_to_int(df, column_name):
 def ex_data_transform(dokument_type, excel_path, hash_code):
     json_data = []
     if dokument_type == "surat_penyerahan_barang":
-        json_data = surat_penyerahan_barang(excel_path=excel_path, hash_code=hash_code)
+        json_data = ex_surat_penyerahan_barang(
+            excel_path=excel_path, hash_code=hash_code
+        )
     elif dokument_type == "surat_penerimaan_materil":
-        json_data = surat_penerimaan_materil(excel_path=excel_path, hash_code=hash_code)
+        json_data = ex_surat_penerimaan_materil(
+            excel_path=excel_path, hash_code=hash_code
+        )
     elif dokument_type == "surat_kebutuhan_alat":
-        json_data = surat_kebutuhan_alat(excel_path=excel_path, hash_code=hash_code)
+        json_data = ex_surat_kebutuhan_alat(excel_path=excel_path, hash_code=hash_code)
     return json_data
 
 
