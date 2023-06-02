@@ -5,6 +5,7 @@ import numpy as np
 import json
 import cv2
 import hashlib
+from werkzeug.utils import secure_filename
 
 __dir__ = os.path.dirname(os.path.abspath(__file__))
 sys.path.append(__dir__)
@@ -12,7 +13,7 @@ sys.path.insert(0, os.path.abspath(os.path.join(__dir__, "..")))
 sys.path.insert(0, os.path.abspath(os.path.join(__dir__, "..\PaddleOCR")))
 
 
-from config import ALLOWED_EXTENSIONS, EXTRACT_RESULT_PATH, JSON_DIR
+from config import ALLOWED_EXTENSIONS, EXTRACT_RESULT_PATH, JSON_DIR, UPLOAD_IMAGE_PATH
 from PaddleOCR import PPStructure, save_structure_res
 from repository import tableRepo
 
@@ -32,7 +33,7 @@ def get_hash_code(img_path):
 
 
 def is_unique(hash_code):
-    result = repo.get_document_by_hash_code(hash_code)
+    result = repo.get_table_extraction_by_hash_code(hash_code)
     return result is None
 
 
@@ -200,25 +201,55 @@ def surat_kebutuhan_alat(excel_path, hash_code):
     return json_all_items
 
 
-def stitching_image(path_img1, path_img2):
-    image1 = cv2.imread(path_img1)
-    image2 = cv2.imread(path_img2)
+# init state : list file
+# final state : di save dan return list path img nya, tp sblm itu d cek ini itu dulu
+# hashcode ngg masuk sini
+def files_handling(files):
+    path_img_list = []
+    for file in files:
+        if allowed_file(file.filename):
+            filename = secure_filename(file.filename)
+            img_path = os.path.join(UPLOAD_IMAGE_PATH, filename)
+            print(img_path)
+            file.save(img_path)
+            path_img_list.append(img_path)
+    return path_img_list
 
-    # resize the second image to have the same width
-    image2 = cv2.resize(image2, (image1.shape[1], image2.shape[0]))
+
+# init state : list path img
+# final state : digabung jadi satu file
+def images_stitching(img_path_list):
+    img_list = []
+    for path in img_path_list:
+        img = cv2.imread(path)
+        img_list.append(img)
+        os.remove(path)
+
+    # resize the width of the image to follow the first image
+    for i in range(len(img_list) - 1):
+        img_list[i + 1] = cv2.resize(
+            img_list[i + 1], (img_list[0].shape[1], img_list[i + 1].shape[0])
+        )
 
     # Create a blank image with sufficient size
-    height = image1.shape[0] + image2.shape[0]
-    width = image1.shape[1]
+    width = img_list[0].shape[1]
+    height = 0
+    for i in range(len(img_list)):
+        height += img_list[i].shape[0]
     result = np.zeros((height, width, 3), dtype=np.uint8)
 
-    # Place the first image at the top of the blank image
-    result[: image1.shape[0], :] = image1
+    # placement of images based on sequence
+    start = 0
+    for img in img_list:
+        end = start + img.shape[0]
+        result[start:end, :] = img
+        start = end
+    filename = "combined_image.jpg"
+    file_path = os.path.join(UPLOAD_IMAGE_PATH, filename)
 
-    # Place the second image at the bottom of the blank image
-    result[image1.shape[0] :, :] = image2
     # save image to file
-    cv2.imwrite("/content/hasil.jpg", result)
+    cv2.imwrite(file_path, result)
+    return file_path
 
 
 def df_to_json(df, json_path):
@@ -231,26 +262,15 @@ def df_to_json(df, json_path):
 
 # convert dataframe column to integer
 def convert_to_int(df, column_name):
-    print("Converting " + column_name)
-    try:
-        df[column_name] = df[column_name].astype(int)
-    # if there are data non numeric
-    except ValueError:
-        # change each non numeric value to 0
-        for index, value in enumerate(df[column_name]):
-            if type(df.at[index, column_name]) == str:
+    print("Converting " + column_name + " to Int")
+    for index, value in enumerate(df[column_name]):
+        if type(df.at[index, column_name]) == str:
+            if df.at[index, column_name].isnumeric() == False:
+                df.at[index, column_name] = df.at[index, column_name].replace(".", "")
+                df.at[index, column_name] = df.at[index, column_name].replace(",", "")
                 if df.at[index, column_name].isnumeric() == False:
-                    df.at[index, column_name] = df.at[index, column_name].replace(
-                        ".", ""
-                    )
-                    df.at[index, column_name] = df.at[index, column_name].replace(
-                        ",", ""
-                    )
-                    print(df.at[index, column_name])
-                    if df.at[index, column_name].isnumeric() == False:
-                        df.at[index, column_name] = 0
-        # change data type of column to int
-        df[column_name] = df[column_name].astype(int)
+                    df.at[index, column_name] = 0
+        df.at[index, column_name] = int(df.at[index, column_name])
 
 
 # json_surat1 = surat_penyerahan_barang(

@@ -6,4 +6,4 @@ sys.path.append(__dir__)
 sys.path.insert(0, os.path.abspath(os.path.join(__dir__, "..")))
 sys.path.insert(0, os.path.abspath(os.path.join(__dir__, "../..")))
 
-from repository import tableRepo
+from repository import tableRepo, documentTypeRepo
