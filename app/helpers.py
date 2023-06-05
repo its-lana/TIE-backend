@@ -56,6 +56,7 @@ def data_transform(document_type, excel_path, hash_code):
     if dokumen["jenis_tabel"] == "Umum":
         json_data = common_table(dokumen["daftar_kolom"], excel_path, hash_code)
     else:
+        # json_data = uncommon_table(dokumen, excel_path, hash_code)
         json_data = ex_surat_penyerahan_barang(excel_path, hash_code)
     return json_data
 
@@ -182,13 +183,191 @@ def ex_data_transform(dokument_type, excel_path, hash_code):
     return json_data
 
 
-def ex_surat_penyerahan_barang(excel_path, hash_code):
-    header = ["No", "Nama Materil", "Jumlah", "Satuan", "Keterangan"]  # set header
+def uncommon_table(doc_type_data, excel_path, hash_code):
+    # header
+    column_list = doc_type_data["daftar_kolom"]
+    column_name_list = [column["nama_kolom"] for column in column_list]
+    # generate use cols: generate list 0..len(column name list)
+    use_cols = list(range(len(column_name_list)))
+    # read excel
     df = pd.read_excel(
-        excel_path, header=None, skiprows=4, names=header, usecols=[0, 1, 2, 4, 5]
+        excel_path, header=None, names=column_name_list, usecols=use_cols
+    )
+    # skiprows
+    nan_indices = df.index[df[column_name_list[1]].isna()].tolist()
+    if nan_indices:
+        print("adaan")
+        df[column_name_list[1]] = df[column_name_list[1]].fillna("Null")
+    skiprows = df[df[column_name_list[1]].str.contains("2")].index.tolist()[0] + 1
+    if df.at[skiprows, column_name_list[1]] == "Null":
+        print("masuk")
+        skiprows += 1
+    else:
+        print("ga masuk")
+    df = df.iloc[skiprows:]
+    df = df.reset_index(drop=True)
+    # get list column with tipe_data int and convert it (include change nan)
+    int_column_list = [
+        column["nama_kolom"] for column in column_list if column["tipe_data"] == "int"
+    ]
+    for column_name in int_column_list:
+        df[column_name] = df[column_name].fillna(0)
+        convert_to_int(df, column_name)
+    # look for coordinates item separator
+    item_separator_data = doc_type_data["pemisah_item"].copy()
+    item_separator_data = add_data_type_column_to_dict(
+        column_list, item_separator_data["kolom_patokan"], item_separator_data
+    )
+    # print(item_separator_data)
+    list_idx_separator = keyword_handler(df, item_separator_data)
+    # create new DataFrame for each item
+    table_items = []
+    start = list_idx_separator[0]
+    for idx_item in range(1, len(list_idx_separator)):
+        end = list_idx_separator[idx_item]
+        item = df.iloc[start:end].reset_index(drop=True)
+        table_items.append(item)
+        start = end
+    # Adds the last item
+    last_item = df.iloc[start:, :]
+    table_items.append(last_item)
+    element_items = doc_type_data["elemen_dalam_satu_item"]
+    print(element_items)
+
+    json_all_items = []
+    # for idx_item, item in enumerate(table_items):
+    #     # divide item data into nama materill, seri, and kelengkapan
+    #     # array_row_element = np.where(item["Nama Materil"].str.contains(":"))
+    #     # looping untuk mendapatkan index elemen
+    #     data_each_elements = []
+    #     for element in element_items:
+    #         #   dapetin index elemen dari suatu item
+    #         #   dapetin tipe_data kolom  yang menjadi key column
+    #         column_data = {}
+    #         column_data["nama_kolom"] = element["key_column"]
+    #         column_data["keyword"] = element["keyword"]
+    #         column_data = add_data_type_column_to_dict(
+    #             column_list, element["key_column"], column_data
+    #         )
+    #         idx_list = keyword_handler(item, column_data)
+    #         # gimana jika dua elemen(bisa brurutan, bisa ada jeda) dari satu item, punya key kolom dan keyword yg sama
+    #         # intinya keyword ny sama
+    #         # gimana jika suatu item ngg punya elemen yg lengkap
+    #         if idx_list:
+    #             element_data = {}
+    #             element_data["nama_elemen"] = element["nama_elemen"]
+    #             element_data["tipe_data"] = element["tipe_data_elemen"]
+    #             element_data["related_column"] = element["related_column"]
+    #             element_data["indeks"] = idx_list[0]
+    #             data_each_elements.append(element_data)
+
+    #     # masukin "dataframe" ke data_each_elements
+    #     # crop df item brdasarkan index dan related column
+    #     if len(data_each_elements) == 1:
+    #         if data_each_elements[0]["related_column"] == "Semua":
+    #             element = item
+    #         else:
+    #             element = item.loc[
+    #                 :, data_each_elements[0]["related_column"]
+    #             ].reset_index(drop=True)
+
+    #         data_each_elements[0]["dataframe"] = element
+    #     elif len(data_each_elements) > 1:
+    #         start = data_each_elements[0]["indeks"]
+    #         for idx in range(1, len(data_each_elements)):
+    #             end = data_each_elements[idx]["indeks"]
+    #             rel_col = data_each_elements[idx - 1]["related_column"]
+    #             if rel_col == "Semua":
+    #                 element = item.loc[start:end].reset_index(drop=True)
+    #             else:
+    #                 element = item.loc[start:end, rel_col].reset_index(drop=True)
+    #             data_each_elements[idx - 1]["dataframe"] = element
+    #             start = end
+    #         # Adds the last item
+    #         rel_col = data_each_elements[-1]["related_column"]
+    #         if rel_col == "Semua":
+    #             element = item.loc[start:].reset_index(drop=True)
+    #         else:
+    #             element = item.loc[start:, rel_col].reset_index(drop=True)
+    #         data_each_elements[-1]["dataframe"] = element
+
+    #     # transform df berdasarkan tipe data elemen
+    #     # pertama cek tipe data elemen, list atau json
+    #     # klo json, bisa lngsung .to_json(orient="records")
+    #     # abis itu ganti json string ke object
+    #     # klo list, gitu lah
+    #     json_item = [{}]
+    #     for data in data_each_elements:
+    #         if data["tipe_data"] == "json":
+    #             json_string = data["dataframe"].to_json(orient="records")
+    #             json_item[0][data["nama_elemen"]] = json.loads(json_string)
+    #         elif data["tipe_data"] == "list":
+    #             seri_str = ""
+    #             for seri in data["dataframe"]:
+    #                 seri_str += seri
+    #             idx_seri = seri_str.find(":")
+    #             seri_str = seri_str[idx_seri + 1 :]
+    #             seri_list = seri_str.split(",")
+    #             json_item[0][data["nama_elemen"]] = seri_list
+    #         else:
+    #             json_string = data["dataframe"].iloc[1:].to_json(orient="records")
+    #             json_item[0][data["nama_elemen"]] = json.loads(json_string)
+    #     json_all_items.append(json_item[0])
+    # json_filename = hash_code + ".json"
+    # json_path = os.path.join(JSON_DIR, json_filename)
+    # with open(json_path, "w") as file:
+    #     json.dump(json_all_items, file)
+    return json_all_items
+
+
+# tujuan : untuk menambahkan tipe data kolom ke suatu dict
+def add_data_type_column_to_dict(column_list, searched_column_name, dict_needed_to_add):
+    for column in column_list:
+        if column["nama_kolom"] == searched_column_name:
+            dict_needed_to_add["tipe_data"] = column["tipe_data"]
+            break
+    return dict_needed_to_add
+
+
+# get index list that relate with keyword from dataframe
+def keyword_handler(df, column_data):
+    # index_list = []
+    print(column_data)
+    no_list = df[column_data["kolom_patokan"]].to_list()
+    if column_data["tipe_data"] == "int":
+        if column_data["keyword"] == "null":
+            index_list = [i for i, value in enumerate(no_list) if value == 0]
+            print("masuk null")
+        # keyword == not null
+        else:
+            index_list = [i for i, value in enumerate(no_list) if value != 0]
+            print("masuk !null")
+    else:
+        if column_data["keyword"] == "null":
+            index_list = df[
+                df[column_data["kolom_patokan"]].str.contains("Null")
+            ].index.tolist()
+        else:
+            index_list = df[
+                df[column_data["kolom_patokan"]].str.contains(column_data["keyword"])
+            ].index.tolist()
+    return index_list
+
+
+def ex_surat_penyerahan_barang(excel_path, hash_code):
+    header = [
+        "No",
+        "Nama Materil",
+        "Jumlah (Angka)",
+        "Jumlah (Huruf)",
+        "Jumlah (Satuan)",
+        "Keterangan",
+    ]  # set header
+    df = pd.read_excel(
+        excel_path, header=None, skiprows=4, names=header, usecols=[0, 1, 2, 3, 4, 5]
     )  # read excel file
     df["No"] = df["No"].fillna(0).astype(int)  # change NaN to 0
-    df["Jumlah"] = df["Jumlah"].fillna(0).astype(int)  # change NaN to 0
+    df["Jumlah (Angka)"] = df["Jumlah (Angka)"].fillna(0).astype(int)  # change NaN to 0
     list_row_item = np.where(
         df["Nama Materil"].isna()
     )  # look for coordinates that become boundaries between items

@@ -1,13 +1,11 @@
-from pymongo import MongoClient
 from bson import json_util, ObjectId
 import json
+from . import db
 
 
 class TableRepo:
     def __init__(self):
-        self.client = MongoClient("localhost", 27017)
-        self.db = self.client.table_information_extraction_db
-        self.tables = self.db.table_extraction
+        self.tables = db["table_extraction"]
 
     def get_table_extraction_by_id(self, table_id):
         table_extraction_data = self.tables.find_one({"_id": ObjectId(table_id)})

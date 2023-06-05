@@ -1,13 +1,11 @@
-from pymongo import MongoClient
 from bson import json_util, ObjectId
 import json
+from . import db
 
 
 class DocumentTypeRepo:
     def __init__(self):
-        self.client = MongoClient("localhost", 27017)
-        self.db = self.client.table_information_extraction_db
-        self.doc_types = self.db.document_types
+        self.doc_types = db["document_types"]
 
     def get_doc_type_by_id(self, doc_type_id):
         doc_type_data = self.doc_types.find_one({"_id": ObjectId(doc_type_id)})
