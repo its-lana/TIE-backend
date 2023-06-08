@@ -34,6 +34,8 @@ def upload_file():
         # # check if the post request has the file part
         # if "file" not in request.files:
         #     return jsonify({"error": "No file part!"}), 400
+        document_type = request.form.get("document_type")
+        print(document_type)
         files = request.files.getlist("file")
         # print(files[0].filename)
 
