@@ -6,16 +6,22 @@ import json
 import cv2
 import hashlib
 from werkzeug.utils import secure_filename
+from bs4 import BeautifulSoup
+import openpyxl
 
 __dir__ = os.path.dirname(os.path.abspath(__file__))
 sys.path.append(__dir__)
 sys.path.insert(0, os.path.abspath(os.path.join(__dir__, "..")))
 sys.path.insert(0, os.path.abspath(os.path.join(__dir__, "..\PaddleOCR")))
-
+sys.path.insert(0, os.path.abspath(os.path.join(__dir__, "..\PaddleOCR\ppstructure")))
+sys.path.insert(
+    0, os.path.abspath(os.path.join(__dir__, "..\PaddleOCR\ppstructure\table"))
+)
 
 from config import ALLOWED_EXTENSIONS, EXTRACT_RESULT_PATH, JSON_DIR, UPLOAD_IMAGE_PATH
 from PaddleOCR import PPStructure, save_structure_res
 from repository import tableRepo, documentTypeRepo
+
 
 table_repo = tableRepo.TableRepo()
 doc_type_repo = documentTypeRepo.DocumentTypeRepo()
@@ -50,11 +56,204 @@ def extract_table(img_path):
     return excel_path
 
 
+def extract_html(img_path):
+    table_engine = PPStructure(layout=False, show_log=True)
+    img = cv2.imread(img_path)
+    result = table_engine(img)
+    html_path = os.path.join(EXTRACT_RESULT_PATH, "show.html")
+    f_html = open(html_path, mode="w", encoding="utf-8")
+    pred_html = result[0]["res"]["html"]
+    f_html.write(
+        '<table  border="1">'
+        + pred_html.replace("<html><body><table>", "").replace(
+            "</table></body></html>", ""
+        )
+    )
+    f_html.close()
+
+    return html_path
+
+
+#####
+
+
+def header_handler(excel_path):
+    wb = openpyxl.load_workbook(excel_path)
+    sheet_names = wb.sheetnames
+    sheet = wb[sheet_names[0]]
+    merged_cells = sheet.merged_cells
+    if merged_cells:
+        last_row_number = get_header_last_row_number(merged_cells)
+    else:
+        last_row_number = 1
+    header_list = get_header_list(sheet)
+    json_data = {}
+    json_data["header_list"] = header_list
+    json_data["skiprows"] = last_row_number
+    return json_data
+
+
+def get_header_last_row_number(merged_cells):
+    merged_list = []
+
+    for merged_cell in merged_cells:
+        merged_list.append(str(merged_cell))
+    print(merged_list)
+    rowspan_list = []
+
+    for merged in merged_list:
+        start_cell, end_cell = merged.split(":")
+        if start_cell[0] == end_cell[0]:
+            rowspan_list.append(merged.split(":"))
+    print(rowspan_list)
+    merged_row_numbers = []
+    for rowspan in rowspan_list:
+        if rowspan[0][1] == "1":
+            merged_row_numbers.append(int(rowspan[1][1]))
+
+    merged_row_numbers.sort(reverse=True)
+    return merged_row_numbers[0]
+
+
+def get_header_list(sheet):
+    print("get header list")
+    merged_cells_ranges = sheet.merged_cells.ranges
+    print(merged_cells_ranges)
+    sorted_ranges = sorted(merged_cells_ranges, key=lambda x: x.min_col)
+    print(sorted_ranges)
+    header_list = []
+    if sorted_ranges:
+        for merged_range in sorted_ranges:
+            if merged_range.min_col == merged_range.max_col:
+                header_list.append(merged_range.start_cell.value)
+                print(merged_range.start_cell.value)
+            else:
+                for i in range(
+                    merged_range.min_col, merged_range.max_col + 1
+                ):  # 3 kali
+                    val = str(merged_range.start_cell.value)
+                    val = (
+                        val
+                        + " - "
+                        + str(sheet.cell(int(merged_range.min_row) + 1, i).value)
+                    )
+                    print(val)
+                    header_list.append(val)
+    else:
+        for cell in sheet.iter_cols(min_row=1, max_row=1, values_only=True):
+            header_list.append(cell[0])
+    return header_list
+
+
+#####
+
+
+def merge_table_header(html_table):
+    # Membaca tabel HTML menggunakan BeautifulSoup
+    soup = BeautifulSoup(html_table, "html.parser")
+
+    # Temukan semua elemen tr dalam tabel
+    rows = soup.find_all("tr")
+
+    # Mencari elemen header dan data
+    row_header = []
+    row_data = []
+    for row in rows:
+        if row.get("class") and "header" in row.get("class"):
+            row_header.append(row)
+        else:
+            row_data.append(str(row))
+
+    # Jika hanya ada satu baris header, kembalikan tabel HTML yang ada
+    if len(row_header) == 1:
+        return str(soup)
+
+    # Menggabungkan header jika ada dua baris header
+    if len(row_header) == 2:
+        new_header = []
+
+        # Membaca header baris pertama
+        header_row_1 = row_header[0].find_all("td")
+        for cell in header_row_1:
+            rowspan = cell.get("rowspan", 1)
+            colspan = cell.get("colspan", 1)
+
+            if int(rowspan) > 1:
+                new_th = soup.new_tag("th")
+                new_th.string = cell.text.strip()
+                new_header.append(str(new_th))
+
+            if int(colspan) > 1:
+                # Membaca header pada baris berikutnya
+                header_row_2 = row_header[1].find_all("td")
+
+                for i in range(int(colspan)):
+                    new_th = soup.new_tag("th")
+                    new_th.string = (
+                        f"{cell.text.strip()} - {header_row_2[i].text.strip()}"
+                    )
+                    new_header.append(str(new_th))
+
+    return (new_header, row_data)
+
+
+def generate_new_table(list_header, list_row):
+    # Membuat BeautifulSoup objek dari string HTML kosong
+    soup = BeautifulSoup("", "html.parser")
+
+    # Membuat elemen <table> baru
+    table = soup.new_tag("table")
+    print(table)
+
+    # Menambahkan elemen header ke dalam tabel
+    header_row = soup.new_tag("tr")
+    for header_cell in list_header:
+        print(header_cell)
+        header_row.append(BeautifulSoup(header_cell, "html.parser"))
+        print(header_row)
+    table.append(header_row)
+    print("debug 2")
+    # Menambahkan elemen data ke dalam tabel
+    for data_row in list_row:
+        table.append(BeautifulSoup(data_row, "html.parser"))
+
+    # Menggabungkan semua elemen menjadi satu
+    soup.append(table)
+    print("debug 3")
+
+    # Menghasilkan tabel HTML baru
+    new_html_table = str(soup)
+
+    return new_html_table
+
+
+def html_to_json(html):
+    soup = BeautifulSoup(html, "html.parser")
+
+    table_data = []
+    table = soup.find("table")
+    table_headings = [th.text for th in table.find_all("th")]
+
+    for row in table.find_all("tr")[1:]:
+        row_data = [td.text for td in row.find_all("td")]
+        table_data.append(dict(zip(table_headings, row_data)))
+
+    json_data = json.dumps(table_data, indent=4)
+    return json_data
+
+
+def html_transform(html_str):
+    headers, row_data = merge_table_header(html_str)
+    new_html = generate_new_table(headers, row_data)
+    json = html_to_json(new_html)
+    return json
+
+
 def data_transform(document_type, excel_path, hash_code):
     document_type = document_type.replace("_", " ").title()
     dokumen = doc_type_repo.get_doc_type_by_name(document_type)
     if dokumen["jenis_tabel"] == "Umum":
-        json_data = common_table(dokumen["daftar_kolom"], excel_path, hash_code)
+        json_data = common_table(dokumen, excel_path, hash_code)
     else:
         # json_data = uncommon_table(dokumen, excel_path, hash_code)
         json_data = ex_surat_penyerahan_barang(excel_path, hash_code)
@@ -62,28 +261,30 @@ def data_transform(document_type, excel_path, hash_code):
 
 
 # data transform for common table
-def common_table(column_list, excel_path, hash_code):
+def common_table(document, excel_path, hash_code):
+    column_list = document["daftar_kolom"]
     # get list column list
     column_name_list = [column["nama_kolom"] for column in column_list]
-    # generate use cols: generate list 0..len(column name list)
-    use_cols = list(range(len(column_name_list)))
+    # get list idx column
+    use_cols = [column["idx"] for column in column_list]
     # read excel
     df = pd.read_excel(
         excel_path, header=None, names=column_name_list, usecols=use_cols
     )
     # skiprows
     df[column_name_list[1]] = df[column_name_list[1]].fillna("")
-    skiprows = df[df[column_name_list[1]].str.contains("2")].index.tolist()[0] + 1
+    # skiprows = df[df[column_name_list[1]].str.contains("2")].index.tolist()[0] + 1
+    skiprows = document["skiprows"]
     df = df.iloc[skiprows:]
     df = df.reset_index(drop=True)
     # replace "No" column value with generate number
-    df[column_name_list[0]] = range(1, len(df) + 1)
+    # df[column_name_list[0]] = range(1, len(df) + 1)
 
     # get list column with tipe_data int
     int_column_list = [
         column["nama_kolom"] for column in column_list if column["tipe_data"] == "int"
     ]
-    int_column_list = int_column_list[1:]
+    # int_column_list = int_column_list[1:]
     # change NaN in int_column_list with 0 and convert to int
     for column_name in int_column_list:
         df[column_name] = df[column_name].fillna(0)
@@ -152,6 +353,11 @@ def df_to_json(df, json_path):
     with open(json_path, "w") as file:
         json.dump(json_list, file)
     return json_list
+
+
+def convert_dict_to_int(id, data_dict):
+    # get data by id, ambil nama dokumennya, abis itu dapetin data kolom dan tipe data nya
+    pass
 
 
 # convert each value in dataframe column to integer
@@ -376,7 +582,7 @@ def ex_surat_penyerahan_barang(excel_path, hash_code):
     items_table = []
     start = 0
     for end in list_row_item[0]:
-        item = df.iloc[start:end, :4].reset_index(drop=True)
+        item = df.iloc[start:end].reset_index(drop=True)
         items_table.append(item)
         start = end + 1
 

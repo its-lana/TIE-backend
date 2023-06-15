@@ -31,11 +31,9 @@ class TableRepo:
         new_id = json.loads(json_util.dumps(persisted_data.inserted_id))
         return list(new_id.values())[0]
 
-    def update_table_extraction(self, table_extraction_data):
-        table_id = table_extraction_data["_id"]
-        del table_extraction_data["_id"]
+    def update_table_extraction(self, table_id, table_extraction_data):
         result = self.tables.update_one(
-            filter={"_id": ObjectId(table_id)}, update={"$set": table_extraction_data}
+            filter={"_id": ObjectId(table_id)}, update={"$set": {"data_ekstraksi":table_extraction_data}}
         )
         return result.modified_count
 

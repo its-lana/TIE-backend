@@ -13,4 +13,4 @@ sys.path.insert(0, os.path.abspath(os.path.join(__dir__, "../..")))
 client = MongoClient("mongodb://localhost:27017")
 db = client["table_information_extraction_db"]
 
-from repository import tableRepo, documentTypeRepo
+from repository import tableRepo, documentTypeRepo, htmlRepo

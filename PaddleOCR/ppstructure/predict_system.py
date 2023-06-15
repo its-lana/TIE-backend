@@ -220,6 +220,7 @@ def save_structure_res(res, save_folder, img_name, img_idx=0):
         "w",
         encoding="utf8",
     ) as f:
+        print(res_cp[0].keys())
         for region in res_cp:
             roi_img = region.pop("img")
             f.write("{}\n".format(json.dumps(region)))

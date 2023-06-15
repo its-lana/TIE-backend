@@ -12,6 +12,7 @@ from flask_cors import CORS
 app = Flask(__name__)
 app.config["UPLOAD_FOLDER"] = UPLOAD_IMAGE_PATH
 app.config["MAX_CONTENT_LENGTH"] = MAX_CONTENT_LENGTH
+app.config["JSON_SORT_KEYS"] = False
 CORS(app, origins="*")
 
 
