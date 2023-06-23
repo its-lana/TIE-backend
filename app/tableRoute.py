@@ -1,6 +1,7 @@
 import os
 import sys
 import shutil
+import bson
 
 
 __dir__ = os.path.dirname(os.path.abspath(__file__))
@@ -27,16 +28,18 @@ from helpers import (
     get_hash_code,
     is_unique,
     files_handling,
-    images_stitching,
+    images_stitching_1,
+    images_stitching_2,
     extract_html,
     html_transform,
 )
 from PaddleOCR.ppstructure import table
 
-from repository import tableRepo, htmlRepo
+from repository import tableRepo, htmlRepo, documentTypeRepo
 
 table_repo = tableRepo.TableRepo()
 html_repo = htmlRepo.HtmlRepo()
+doc_type_repo = documentTypeRepo.DocumentTypeRepo()
 
 
 @app.route("/html", methods=["POST"])
@@ -51,7 +54,7 @@ def get_html():
     elif len(img_path_list) == 1:
         img_path = img_path_list[0]
     else:
-        img_path = images_stitching(img_path_list)
+        img_path = images_stitching_1(img_path_list)
     html_path = extract_html(img_path)
 
     with open(html_path, "r", encoding="utf-8") as f:
@@ -104,7 +107,7 @@ def upload_file():
         elif len(img_path_list) == 1:
             img_path = img_path_list[0]
         else:
-            img_path = images_stitching(img_path_list)
+            img_path = images_stitching_1(img_path_list)
         print("di atas hashcode")
         hash_code = get_hash_code(img_path)
         # Has the image been extracted?
@@ -114,10 +117,10 @@ def upload_file():
         # document_type = request.form.get("document_type")
         print(document_type)
         excel_path = extract_table(img_path)
-        os.remove(img_path)
+        # os.remove(img_path)
         print(excel_path)
         extraction_data = data_transform(document_type, excel_path, hash_code)
-        # shutil.rmtree(os.path.dirname(os.path.abspath(excel_path)))
+        shutil.rmtree(os.path.dirname(os.path.abspath(excel_path)))
 
         json_data = {}
         json_data["hash_code"] = hash_code
@@ -182,14 +185,39 @@ def get_data_extraction(table_id):
     return response
 
 
-# note : data yg dikiri fe pas put, harus ada id nya,
 @app.route("/table/<string:table_id>", methods=["PUT"])
 def update_data_extraction(table_id):
-    body = request.get_json()
+    extraction_data = request.get_json()
+
+    # check there are data with that id
     table_data = table_repo.get_table_extraction_by_id(table_id)
     if table_data is None:
         return jsonify({"error": "No data with that id!"}), 400
-    updated = table_repo.update_table_extraction(table_id, body)
+
+    # dapetin jenis dokumen dari table_data
+    document_type = table_data["jenis_dokumen"]
+    # get data jenis dokumen by nama dokumen
+    document_type_data = doc_type_repo.get_doc_type_by_name(document_type)
+    # dapetin daftar kolom dari data jenis dokumen
+    column_list = document_type_data["daftar_kolom"]
+
+    # get list column with tipe_data int
+    int_column_list = [
+        column["nama_kolom"] for column in column_list if column["tipe_data"] == "int"
+    ]
+    # convert to int
+    for data in extraction_data:
+        for column in int_column_list:
+            if type(data[column]) == str:
+                if data[column].isnumeric() == False:
+                    data[column] = data[column].replace(".", "")
+                    data[column] = data[column].replace(",", "")
+                    if data[column].isnumeric() == False:
+                        data[column] = 0
+            data[column] = bson.Int64(int(data[column]))
+
+    # update data
+    updated = table_repo.update_table_extraction(table_id, extraction_data)
 
     response = jsonify(table_repo.get_table_extraction_by_id(table_id))
     response.status_code = 200

@@ -312,7 +312,7 @@ def files_handling(files):
 
 
 # images stitching from list image
-def images_stitching(img_path_list):
+def images_stitching_1(img_path_list):
     img_list = []
     for path in img_path_list:
         img = cv2.imread(path)
@@ -338,11 +338,92 @@ def images_stitching(img_path_list):
         end = start + img.shape[0]
         result[start:end, :] = img
         start = end
+    draw_line_result = draw_vertical_line(result)
     filename = "combined_image.jpg"
     file_path = os.path.join(UPLOAD_IMAGE_PATH, filename)
 
     # save image to file
-    cv2.imwrite(file_path, result)
+    cv2.imwrite(file_path, draw_line_result)
+    return file_path
+
+
+def draw_vertical_line(image):
+    gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+
+    # Mengaplikasikan Canny edge detection
+    edges = cv2.Canny(gray, 50, 150)
+
+    # Menggunakan Transformasi Hough untuk mendeteksi garis
+    lines = cv2.HoughLinesP(
+        edges, 1, np.pi / 180, threshold=100, minLineLength=100, maxLineGap=10
+    )
+
+    horizontal_lines = []
+    vertical_lines = []
+    for line in lines:
+        x1, y1, x2, y2 = line[0]
+        angle = np.arctan2(y2 - y1, x2 - x1) * 180 / np.pi
+
+        if abs(angle) < 10:  # Menentukan ambang batas sudut garis horizontal
+            horizontal_lines.append(line)
+        elif abs(angle + 90) < 10:  # Menentukan ambang batas sudut garis vertikal
+            vertical_lines.append(line)
+        else:
+            print(angle - 90)
+
+    sorted_h_lines = sorted(
+        horizontal_lines, key=lambda line: min(line[0][1], line[0][3]), reverse=True
+    )
+    ymax = sorted_h_lines[0][0][1]
+    # Menampilkan garis vertikal
+    for line in vertical_lines:
+        x1, y1, x2, y2 = line[0]
+        cv2.line(image, (x2, y2), (x1, ymax), (0, 0, 0), 1)
+    return image
+
+
+def images_stitching_2(img_path_list):
+    image1 = cv2.imread(img_path_list[0])
+    image2 = cv2.imread(img_path_list[1])
+    # Konversi gambar ke skala abu-abu
+    gray1 = cv2.cvtColor(image1, cv2.COLOR_BGR2GRAY)
+    gray2 = cv2.cvtColor(image2, cv2.COLOR_BGR2GRAY)
+
+    # Mendapatkan dimensi gambar pertama
+    height1, width1 = gray1.shape[:2]
+
+    # Hitung selisih tinggi antara gambar pertama dan gambar kedua
+    height_diff = height1 - gray2.shape[0]
+
+    # Tambahkan padding pada gambar kedua untuk menyamakan tinggi dengan gambar pertama
+    padded_image2 = cv2.copyMakeBorder(
+        image2, 0, height_diff, 0, 0, cv2.BORDER_CONSTANT, value=0
+    )
+
+    # Temukan pergeseran (shift) antara kedua gambar dengan template matching secara vertikal
+    result = cv2.matchTemplate(gray1, gray2, cv2.TM_CCOEFF_NORMED)
+    _, _, _, max_loc = cv2.minMaxLoc(result)
+    y_shift = max_loc[1] - gray1.shape[0]
+
+    # Gabungkan gambar pertama dengan gambar kedua yang telah di-shift secara vertikal
+    stitched_image = np.concatenate((image1, padded_image2[y_shift:, :]), axis=0)
+
+    # Gabungkan garis vertikal tabel dari gambar pertama dengan gambar kedua
+    for y in range(height1):
+        stitched_image[y, width1:] = np.where(
+            stitched_image[y, width1:] == 255,
+            image1[y, width1:],
+            stitched_image[y, width1:],
+        )
+
+    height1, width1 = stitched_image.shape[:2]
+    cropped_stitc = stitched_image[: height1 - height_diff, :]
+
+    filename = "combined_image.jpg"
+    file_path = os.path.join(UPLOAD_IMAGE_PATH, filename)
+
+    # save image to file
+    cv2.imwrite(file_path, cropped_stitc)
     return file_path
 
 

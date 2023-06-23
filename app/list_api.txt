@@ -1,0 +1,63 @@
+1. table API
+  - extractTableFromImage [POST]
+  - getAllDataExtraction [GET]
+  - getDataExtractionByID [GET]
+  - updateDataExtraction [PUT]
+  - deleteDataExtraction [DELETE]
+
+2. document type
+ - extractHeaderFromImage [POST]
+ - addDocumentType [POST]
+ - getAllDocumentTypes [GET]
+ - getDocumentTypeById [GET]
+ - updateDocumentType [PUT]
+ - deleteDocumentType [DELETE]
+
+3. html API 
+ - extrctHTMLfromImage [POST]
+ - htmlTranformation [POST]
+
+
+coretan :
+int_column = ["NO URUT", "BANYAKNYA - ANGKA", "HARGA - JUMLAH (Rp)"]
+extraction_data = 
+[
+  {
+    "NO URUT": 1,
+    "NAMA DAN KODE MATERIIL": "SOUND SYSTEM LAPANGAN terdiri dari :",
+    "SATUAN": "Set",
+    "BANYAKNYA - ANGKA": 7,
+    "BANYAKNYA - HURUF": "Tujuh",
+    "HARGA - JUMLAH (Rp)": 0,
+    "KET": null
+  },
+  {
+    "NO URUT": 0,
+    "NAMA DAN KODE MATERIIL": "Active line array speaker 2x1 inch RCF HDL 25-A",
+    "SATUAN": "Buah",
+    "BANYAKNYA - ANGKA": 42,
+    "BANYAKNYA - HURUF": "Empat Dua",
+    "HARGA - JUMLAH (Rp)": {
+      "$numberLong": "2917349980"
+    },
+    "KET": null
+  },
+  {
+    "NO URUT": 2,
+    "NAMA DAN KODE MATERIIL": "Antenna Distribution + Sirip, Audio Technica ATW DA49 + ATWA49",
+    "SATUAN": "Buah",
+    "BANYAKNYA - ANGKA": 7,
+    "BANYAKNYA - HURUF": "Tujuh",
+    "HARGA - JUMLAH (Rp)": 312875000,
+    "KET": null
+  },
+  {
+    "NO URUT": 3,
+    "NAMA DAN KODE MATERIIL": "Digital mixer 24 channel, A&H QU-24",
+    "SATUAN": "Buah",
+    "BANYAKNYA - ANGKA": 7,
+    "BANYAKNYA - HURUF": "Tujuh",
+    "HARGA - JUMLAH (Rp)": 204750000,
+    "KET": null
+  }
+]

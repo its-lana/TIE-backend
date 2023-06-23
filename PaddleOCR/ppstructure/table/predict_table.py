@@ -102,6 +102,8 @@ class TableSystem(object):
         time_dict["rec"] = rec_elapse
         print(dt_boxes)
 
+        print(dt_boxes)
+        print(rec_res)
         if return_ocr_result_in_table:
             result["boxes"] = dt_boxes  # [x.tolist() for x in dt_boxes]
             result["rec_res"] = rec_res
